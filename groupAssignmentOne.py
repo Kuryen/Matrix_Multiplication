@@ -30,25 +30,43 @@ def Sub_Mat_Mult_P(MAT_A, MAT_B, MAT_C, PROC, nPROC):
 
 if __name__ == '__main__':
 
-    z = 100
-    n = z
-    m = z
-    l = z
+    nlist = [100, 1000, 5000, 10000]
+    pList = [1, 2, 4, 8]
+    t = 0
 
-    A = np.random.randint(0, 10, size=(n, m))
-    print(A, "\n")
+    for e_n in nlist:
 
-    B = np.random.randint(0, 10, size=(m, l))
-    print(B, "\n")
+        print("\nCalculating for", e_n, "x", e_n, "Matrix")
 
-    t1_o = time.time()
-    C = Mat_Mult_S(A, B)
-    t1_f = time.time()
-    print(t1_f - t1_o)
-    print(C, "\n")
+        n = e_n
+        m = n
+        l = n
 
-    t2_o = time.time()
-    D = Mat_Mult_P(A, B, 2)
-    t2_f = time.time()
-    print(t2_f - t2_o)
-    print(D, "\n")
+        A = np.random.randint(0, 10, size=(n, m))
+        print(A, "\n")
+
+        B = np.random.randint(0, 10, size=(m, l))
+        print(B, "\n")
+
+        for e_p in pList:
+
+            print("\nNumber of Processes:", e_p)
+
+            p = e_p
+
+            if e_p is 1:
+                t1_o = time.time()
+                C = Mat_Mult_S(A, B)
+                t1_f = time.time()
+                t = t1_f - t1_o
+                print("Time:", t1_f - t1_o)
+                print(C, "\n")
+
+            else:
+                t2_o = time.time()
+                D = Mat_Mult_P(A, B, p)
+                t2_f = time.time()
+                su = (t - (t2_f - t2_o)) / t
+                print("Time:", t2_f - t2_o)
+                print("Speed Up:", su)
+                print(D, "\n")

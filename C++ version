@@ -1,0 +1,133 @@
+#include <iostream>
+#include <thread>
+#include <vector>
+#include <random>
+#include <chrono>
+
+using namespace std;
+
+int getRandomInt(int min, int max) {
+	random_device rd;
+	mt19937 gen(rd());
+	uniform_int_distribution<> dist(min, max);
+	return dist(gen);
+}
+
+double getCurrentTimeInSeconds() {
+	auto currentTime = std::chrono::high_resolution_clock::now();
+	auto duration = currentTime.time_since_epoch();
+	return std::chrono::duration<double>(duration).count();
+}
+
+
+class Matrix {
+
+private:
+
+	vector<vector<int>> MTX;
+
+public:
+
+	Matrix(int n, int m) : MTX(n, vector<int>(m, 0)) {}
+
+	Matrix(int n, int m, int r, int R) : MTX(n, vector<int>(m, 0)) {
+		for (int i = 0; i < this->length(); i++) for (int j = 0; j < this->width(); j++) (*this)(i, j) = getRandomInt(r, R);
+	}
+
+	int length() { return MTX.size(); }
+
+	int width() { return MTX.at(0).size(); }
+
+	int& operator()(int x, int y) { return MTX.at(x).at(y); }
+
+	int operator()(int x, int y) const { return MTX.at(x).at(y); }
+
+	void print() {
+		int l, w, ln = this->length(), wn = this->width(), n = 4;
+		if (ln > n) l = n;
+		else l = ln;
+		if (wn > n) w = n;
+		else w = wn;
+		for (int i = 0; i < l; i++) {
+			for (int j = 0; j < w; j++) cout << (*this)(i, j) << "\t";
+			if (wn > n) cout << "...";
+			cout << endl;
+		} if (ln > n) cout << "...";
+		cout << endl;
+		return;
+	}
+
+	Matrix operator*(Matrix that) {
+		int kn = this->width();
+		if (kn != that.length()) throw runtime_error("Matrix dimensions are incompatible for multiplication.");
+		int in = this->length(), jn = that.width();
+		Matrix OutPut = Matrix(in, jn);
+		for (int i = 0; i < in; i++) for (int j = 0; j < jn; j++) for (int k = 0; k < kn; k++) OutPut(i, j) += (*this)(i, k) * that(k, j);
+		return OutPut;
+	}
+
+	static void Multiply_P(Matrix& A, Matrix& B, Matrix& C, int in, int jn, int kn, int p, int np) {
+		for (int i = p; i < in; i += np) for (int j = 0; j < jn; j++) for (int k = 0; k < kn; k++) C(i, j) += A(i, k) * B(k, j);
+		return;
+	}
+
+	static Matrix Multiply(Matrix A, Matrix B, int T){
+		int kn = A.width();
+		if (kn != B.length()) throw runtime_error("Matrix dimensions are incompatible for multiplication.");
+		int in = A.length(), jn = B.width();
+		Matrix OutPut = Matrix(in, jn);
+		vector<thread> Threads = vector<thread>(T);
+		for (int i = 0; i < T; i++) Threads.at(i) = thread([&A, &B, &OutPut, in, jn, kn, i, T] {Multiply_P(A, B, OutPut, in, jn, kn, i, T); });
+		for (int i = 0; i < T; i++) Threads.at(i).join();
+		return OutPut;
+	}
+
+};
+
+
+int main() {
+
+	double st, et;
+
+	int T, n, m[4] = {100, 1000, 5000, 10000};
+	double t1, t2;
+
+	for (int i = 0; i < 4; i++) {
+		
+		n = m[i];
+
+		cout << endl << n << " by " << n << " Matrix Oparation" << endl << endl;
+
+		Matrix A = Matrix(n, n, 0, 10);
+		A.print();
+
+		cout << endl << endl;
+
+		Matrix B = Matrix(n, n, 0, 10);
+		B.print();
+		
+		cout << endl << endl;
+
+		st = getCurrentTimeInSeconds();
+		Matrix C = A * B;
+		et = getCurrentTimeInSeconds();
+		t1 = et - st;
+		C.print();
+		cout << "time :"<< t1 << endl << endl;
+
+		for (int j = 1; j < 4; j++) {
+			T = pow(2, j);
+			cout << T << " threads" << endl;
+			st = getCurrentTimeInSeconds();
+			Matrix C = Matrix::Multiply(A, B, T);
+			et = getCurrentTimeInSeconds();
+			t2 = et - st;
+			C.print();
+			cout << "time :" << t2 << endl; 
+			cout << "speed up :" << (t1 - t2) / t1 << endl << endl;
+		}
+		
+	}
+
+	return 0;
+}

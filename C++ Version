@@ -89,10 +89,10 @@ int main() {
 
 	double st, et;
 
-	int T, n, m[4] = {100, 1000, 5000, 10000};
+	int T, n, m[1] = {10000};
 	double t1, t2;
 
-	for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < 1; i++) {
 		
 		n = m[i];
 
